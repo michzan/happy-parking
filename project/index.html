@@ -1,0 +1,613 @@
+<!doctype html>
+<html>
+  <head>
+      <!--per ricaricare sempre la pagina da zero e non usare la cache-->
+      <META HTTP-EQUIV=”Pragma” CONTENT=”no-cache”>
+      <META HTTP-EQUIV=”Cache-Control” CONTENT=”no-cache”>
+      <link rel="stylesheet" href="./resources/myStyle.css"> </link>
+        
+  </head>
+   
+<body>
+	
+<div id="mainContainer">	
+	<canvas width="950" height="690" id="text">Your browser does not support canvas</canvas>
+ 
+	<canvas width="1200" height="600" id="mainCanvas"></canvas>
+  
+</div>
+<div id="touchCanvasContainer">
+		<canvas width="200" height="200" id="touchCanvas1"></canvas>
+		<canvas width="200" height="200" id="touchCanvas2"></canvas>
+</div>
+<div id="collisionCanvasContainer">
+  <canvas width="700" height="200" id="collisionCanvas"></canvas>
+</div>
+  
+
+<div id="uiContainer">
+  <div class="titolo">HAPPY PARKING</div>
+  <div class="radioContainer">
+    <ul class="list">
+      <li class="list__item">
+        <input type="radio" class="radio-btn" name="modalita" id="scena" value="scena" checked onclick="changeMod(this)"/>
+        <label for="scena" class="label">Modalita' scena</label>
+      </li>
+      
+      <li class="list__item">
+        <input type="radio" class="radio-btn" name="modalita" id="parcheggio" value="parcheggio" onclick="changeMod(this)"/>
+        <label for="parcheggio" class="label">Modalita' parcheggio</label>
+      </li>
+    </ul>
+    <div id = "sceltaVisuale" hidden>
+      <ul class="list">
+        <li class="list__item">
+          <input type="radio" class="radio-btn" name="visuale" id="primaPer" value="primaPer" checked onclick="changeVisual(this)"/>
+          <label for="primaPer" class="label">Visuale Prima Persona</label>
+        </li>
+        <li class="list__item">
+          <input type="radio" class="radio-btn" name="visuale" id="terzaPer" value="terzaPer" onclick="changeVisual(this)"/>
+          <label for="terzaPer" class="label">Visuale Terza Persona</label>
+          
+      </li>
+       
+    </ul>
+    <div class="slideContainer">
+      <label class="sliderTitle">Alberi</label>
+      <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="myRange"  onclick="changeTrA(this)">
+      <label class="sliderTitle">Colonna</label>
+      <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="myRange" onclick="changeTrC(this)">
+      <label class="sliderTitle">Entrata</label>
+      <input type="range" min="0" max="1" value="1" step="0.1" class="slider" id="myRange" onclick="changeTrE(this)">
+    </div>
+    
+    </div>
+  </div>
+    
+    
+  <label class="lightMoveOpt">Movimento della Luce
+    <input type="checkbox"  onclick="activeLightMovement(this)">
+    <span class="checkmark"></span>
+  </label>
+  
+  <button class="button" id="reset" onclick="resetVisualPosition()">RESET</button>
+  <button class="button" id="istruz" value="show" onclick="showIns(this)">ISTRUZIONI</button>
+</div>
+
+
+</body>
+
+<!-- vertex shader -->
+<script id="3d-vertex-shader" type="x-shader/x-vertex">
+    attribute vec4 a_position;
+    attribute vec3 a_normal;
+    attribute vec2 a_texcoord;
+    
+  
+    uniform mat4 u_projection;
+    uniform mat4 u_view;
+    uniform mat4 u_world;
+    uniform vec3 u_viewWorldPosition;
+  
+    varying vec3 v_normal;
+    varying vec3 v_surfaceToView;
+    varying vec2 v_texcoord;
+    
+  
+    void main() {
+      vec4 worldPosition = u_world * a_position;
+      gl_Position = u_projection * u_view * worldPosition;
+      v_surfaceToView = u_viewWorldPosition - worldPosition.xyz;
+      v_normal = mat3(u_world) * a_normal;
+      v_texcoord = a_texcoord;
+      
+    }
+  </script>
+  <!-- fragment shader -->
+  <script id="3d-fragment-shader" type="x-shader/x-fragment">
+    precision highp float;
+  
+    varying vec3 v_normal;
+    varying vec3 v_surfaceToView;
+    varying vec2 v_texcoord;
+    
+    
+    uniform vec3 diffuse;
+    uniform vec3 ambient;
+    uniform vec3 emissive;
+    uniform vec3 specular;
+    uniform float shininess;
+    uniform float opacity;
+    uniform float d;
+    uniform vec3 u_lightDirection;
+    uniform vec3 u_ambientLight;
+    uniform vec3 u_colorLight;
+    uniform sampler2D diffuseMap;
+    uniform int mode;
+  
+    void main () {
+      vec3 normal = normalize(v_normal);
+  
+      vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+      vec3 halfVector = normalize(u_lightDirection + surfaceToViewDirection);
+  
+      float fakeLight = dot(u_lightDirection, normal) * .5 + .6;
+      float specularLight = clamp(dot(normal, halfVector), 0.0, 1.0);
+  
+      
+      
+      if (mode == 1){
+        vec4 diffuseMapColor = texture2D(diffuseMap, v_texcoord);
+        vec3 effectiveDiffuse = diffuse *diffuseMapColor.rgb *u_colorLight.rgb;
+        float effectiveOpacity = opacity * diffuseMapColor.a * d;
+        gl_FragColor = vec4(
+          emissive  +
+          ambient * u_ambientLight +
+          effectiveDiffuse * fakeLight +
+          specular * pow(specularLight, shininess),
+          effectiveOpacity);
+      }else{
+        vec3 effectiveDiffuse = diffuse * u_colorLight.rgb;
+        float effectiveOpacity = opacity * d;
+        gl_FragColor = vec4(
+          emissive  +
+          ambient * u_ambientLight +
+          diffuse  * fakeLight +
+          specular * pow(specularLight, shininess),
+          effectiveOpacity);
+            }
+    }
+</script>
+
+
+<script type="text/javascript" src="resources/mesh_utils.js"></script>
+<script type="text/javascript" src="resources/glm_utils.js"></script>
+<script type="text/javascript" src="resources/webgl-utils.js"></script>
+<script type="text/javascript" src="resources/m4.js"></script>
+<script type="text/javascript" src="resources/jquery-3.6.0.js"></script>
+<script type="text/javascript" src="resources/cameraUtils.js"></script>
+<script type="text/javascript" src="resources/interaction.js"></script>
+<script type="text/javascript" src="resources/carMove.js"></script>
+<script type="text/javascript" src="resources/load_mesh.js"></script>
+
+
+<!--<script type="text/javascript" src="car_obj_file.js"></script> -->
+
+<script>
+  //Variabili canvas e rispettivi contesti
+var canvas, gl, textCanvas, ctx, touchCanvas1, ctxTouchCanvas1, touchCanvas2, ctxTouchCanvas2, cursorImg, collisionCanvas, ctxCollisionCanvas;
+
+//variabili per movimento camera
+var cameraInteraction = {
+	moveForward: false, moveBackward: false, moveLeft: false, moveRight: false, moveUp: false, moveDown: false, rotateRight: false, rotateLeft: false, rotateUp: false, rotateDown: false
+}
+
+var trA = 1;
+var trC = 1;
+var trE = 1;
+
+//immagine istruzioni
+var istruzioni=new Image();
+istruzioni.src = "./data/istruzioni.png";
+
+//Variabili relative alla luce
+var initial_LightPos = [-2, 2, 6];
+var lightPos = initial_LightPos;
+var lightMoveOpt = false;
+var ambientLight=[0.2,0.2,0.2];
+var colorLight=[1.0,1.0,1.0];
+
+var modalitaParcheggio = false;
+
+var fov = 37;
+var zmin = 0.1;
+var zmax = 200;
+var aspect;
+var newAspect;
+var mo_matrix, projectionMatrix, viewMatrix;
+var lightMmatrix;
+
+//varriabili per mesh
+var meshes = new Array();
+
+var carP = new Array();
+var stradaP = new Array();
+var pianoP = new Array();
+
+var car = new Array();
+var ruotaAD = new Array();
+var ruotaAS = new Array();
+var ruotaPD = new Array();
+var ruotaPS = new Array();
+var strada = new Array();
+var shop = new Array();
+var elemTetto1 = new Array();
+var elemTetto2 = new Array();
+var elemTetto3 = new Array();
+var fontana = new Array();
+var tettoia = new Array();
+var ingresso = new Array();
+var piano = new Array();
+var vetrata1 = new Array();
+var vetrata2 = new Array();
+var alberi = new Array();
+var colonna = new Array();
+var pianoErba = new Array();
+var muretto1 = new Array();
+var muretto2 = new Array();
+
+//matrici per posizioni iniziali delle mesh
+var car_mo_matrix;
+var ruotaPD_mo_matrix;
+var ruotaPS_mo_matrix;
+var ruotaAD_mo_matrix;
+var ruotaAS_mo_matrix;
+var pianoStrada_mo_matrix;
+
+var lightTextureProgram;
+var lightTextureProgramLoc
+
+var cameraSensibility = 1;
+
+
+function initPrograms(){
+  
+  lightTextureProgram = webglUtils.createProgramFromScripts(gl, ["3d-vertex-shader", "3d-fragment-shader"]);
+
+  lightTextureProgramLoc = {
+    positionLocation : gl.getAttribLocation(lightTextureProgram, "a_position"),
+    normalLocation : gl.getAttribLocation(lightTextureProgram, "a_normal"),
+    texcoordLocation : gl.getAttribLocation(lightTextureProgram, "a_texcoord"),
+
+    diffuse : gl.getUniformLocation(lightTextureProgram, "diffuse" ),
+    ambient : gl.getUniformLocation(lightTextureProgram, "ambient" ), 
+    specular : gl.getUniformLocation(lightTextureProgram, "specular"),	
+    emissive : gl.getUniformLocation(lightTextureProgram, "emissive"),
+    shininess : gl.getUniformLocation(lightTextureProgram, "shininess"),
+    opacity : gl.getUniformLocation(lightTextureProgram, "opacity"),
+    d : gl.getUniformLocation(lightTextureProgram, "d"),
+
+    mode : gl.getUniformLocation(lightTextureProgram, "mode"),
+
+    matrixLocation : gl.getUniformLocation(lightTextureProgram, "u_world"),
+    textureLocation : gl.getUniformLocation(lightTextureProgram, "diffuseMap"),
+    viewMatrixLocation : gl.getUniformLocation(lightTextureProgram, "u_view"),
+    projectionMatrixLocation : gl.getUniformLocation(lightTextureProgram, "u_projection"),
+    lightWorldDirectionLocation : gl.getUniformLocation(lightTextureProgram, "u_lightDirection"),
+    viewWorldPositionLocation : gl.getUniformLocation(lightTextureProgram, "u_viewWorldPosition")
+  };
+}
+
+function init(){
+  /******* CREAZIONE CANVAS*******/
+  canvas = document.getElementById('mainCanvas');
+  gl = canvas.getContext('webgl');
+   if(!gl){
+     alert("Your browser does not support WebGL!");
+   }
+
+  // setto quindi la viewport alla dimensione della canvas e aggiorno l'aspect
+  gl.viewport(0.0, 0.0, canvas.width, canvas.height);
+  gl.clearColor(0.7, 0.85, 0.95, 1);	
+
+  //Canvas per le istruzioni
+  textCanvas = document.getElementById("text");
+  // make a 2D context for it
+  ctx = textCanvas.getContext("2d");
+
+ collisionCanvas = document.getElementById('collisionCanvas');
+ ctxCollisionCanvas = collisionCanvas.getContext("2d");
+ collisionCanvas.width = 700;
+ collisionCanvas.height = 200;
+
+ //Creo le 2 canvas per la gestione del touch
+ touchCanvas1 = document.getElementById('touchCanvas1');
+ ctxTouchCanvas1 = touchCanvas1.getContext("2d");
+ touchCanvas1.width = 200;
+ touchCanvas1.height = 200;
+ ctxTouchCanvas1.globalAlpha = 0.4;
+ ctxTouchCanvas1.fillStyle = "white";
+
+ touchCanvas2 = document.getElementById('touchCanvas2');
+ ctxTouchCanvas2 = touchCanvas2.getContext("2d");
+ touchCanvas2.width = 200;
+ touchCanvas2.height = 200;
+ ctxTouchCanvas2.globalAlpha = 0.4;
+ ctxTouchCanvas2.fillStyle = "white";
+
+ // Disegno il gamepad sulle due canvas per la gestione del touch
+ cursorImg = new Image();
+     cursorImg.onload = function() {
+      ctxTouchCanvas1.drawImage(cursorImg, -5, -5, 200, 200);
+      ctxTouchCanvas2.drawImage(cursorImg, -5, -5, 200, 200);
+    };
+
+ // Caricamento dell'immagine dei controller
+ cursorImg.src = "./data/controller2.png";
+
+/******* CARICAMENTO DELLE MESH *******/
+mo_matrix = m4.identity();
+
+car_mo_matrix = m4.translate(mo_matrix,-21,0,-29)
+car.sourceMesh='data/car.obj';
+LoadMesh(gl,car,'carMesh',mo_matrix);
+
+
+ruotaPD_mo_matrix = m4.translate(mo_matrix, 0.72, -0.04, 1.10)
+ruotaPD.sourceMesh = 'data/ruotaPD.obj';
+LoadMesh(gl,ruotaPD,'ruotaPosDMesh',ruotaPD_mo_matrix);
+
+ruotaPS_mo_matrix = m4.translate(mo_matrix, -0.72, -0.04, 1.10)
+ruotaPS.sourceMesh = 'data/ruotaPS.obj';
+LoadMesh(gl,ruotaPS,'ruotaPosSMesh',ruotaPS_mo_matrix);
+
+ruotaAD_mo_matrix = m4.translate(mo_matrix, 0.72, -0.04, -1.10)
+ruotaAD.sourceMesh = 'data/ruotaAD.obj';
+LoadMesh(gl,ruotaAD,'routaAntDMesh',ruotaAD_mo_matrix);
+
+ruotaAS_mo_matrix = m4.translate(mo_matrix, -0.72, -0.04, -1.10)
+ruotaAS.sourceMesh = 'data/ruotaAS.obj';
+LoadMesh(gl,ruotaAS,'routaAntSMesh',ruotaAS_mo_matrix);
+
+pianoStrada_mo_matrix = m4.translate(mo_matrix, -0.25, 0.66 , -0.2)
+
+strada.sourceMesh = 'data/stradaParcheggio.obj';
+LoadMesh(gl,strada,'stradaMesh',pianoStrada_mo_matrix);
+ 
+piano.sourceMesh = 'data/piano.obj';
+LoadMesh(gl,piano,'pianoMesh', pianoStrada_mo_matrix);
+
+muretto1.sourceMesh = 'data/muretto1.obj';
+LoadMesh(gl,muretto1,'muretto1Mesh', pianoStrada_mo_matrix);
+
+muretto2.sourceMesh = 'data/muretto2.obj';
+LoadMesh(gl,muretto2,'muretto2Mesh', pianoStrada_mo_matrix);
+
+pianoErba.sourceMesh = 'data/pianoerba.obj';
+LoadMesh(gl,pianoErba,'pianoErbaMesh', pianoStrada_mo_matrix);
+
+shop.sourceMesh = 'data/shop.obj';
+LoadMesh(gl,shop,'shopMesh',pianoStrada_mo_matrix);
+
+vetrata1.sourceMesh = 'data/vetrata1.obj';
+LoadMesh(gl,vetrata1,'vetrata1Mesh', pianoStrada_mo_matrix);
+
+vetrata2.sourceMesh = 'data/vetrata2.obj';
+LoadMesh(gl,vetrata2,'vetrata2Mesh', pianoStrada_mo_matrix);
+
+colonna.sourceMesh = 'data/colonna.obj';
+LoadMesh(gl,colonna,'colonnaMesh', pianoStrada_mo_matrix);
+
+tettoia.sourceMesh = 'data/tettoia.obj';
+LoadMesh(gl,tettoia,'tettoiaMesh', pianoStrada_mo_matrix);
+
+ingresso.sourceMesh = 'data/ingresso.obj';
+LoadMesh(gl,ingresso,'ingressoMesh',pianoStrada_mo_matrix);
+
+elemTetto1.sourceMesh = 'data/tetto1.obj';
+LoadMesh(gl,elemTetto1,'tetto1Mesh',pianoStrada_mo_matrix);
+
+elemTetto2.sourceMesh = 'data/tetto2.obj';
+LoadMesh(gl,elemTetto2,'tetto2Mesh',pianoStrada_mo_matrix);
+
+elemTetto3.sourceMesh = 'data/tetto3.obj';
+LoadMesh(gl,elemTetto3,'tetto3Mesh',pianoStrada_mo_matrix);
+
+alberi.sourceMesh = 'data/alberi.obj';
+LoadMesh(gl,alberi,'alberiMesh', pianoStrada_mo_matrix);
+
+fontana.sourceMesh = 'data/fontana.obj';
+LoadMesh(gl,fontana,'fontanaMesh',pianoStrada_mo_matrix);
+
+
+/******* INIZIALIZZAZIONE ASPECT E PROJECTION MATRIX *******/
+aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+projectionMatrix  = m4.perspective(degToRad(fov), aspect, zmin, zmax); 
+    
+console.log(meshes);
+}
+
+/*=================== MOVE CAMERA: set up dei movimenti della camera ===================*/
+function moveCamera(){
+	viewParamsChanged = false;
+		if (cameraInteraction.moveForward) {
+			moveForwardCameraPos(0.001+cameraSensibility);
+			moveForwardTarget(0.01+cameraSensibility);
+			viewParamsChanged = true;
+		}
+		if (cameraInteraction.moveBackward) {
+			moveForwardCameraPos(-0.001-cameraSensibility);
+			moveForwardTarget(-0.01-cameraSensibility);
+			viewParamsChanged = true;
+		}
+		if (cameraInteraction.moveLeft) {
+			moveRightCameraPos(-0.001-cameraSensibility);
+			moveRightTarget(-0.01-cameraSensibility);
+			viewParamsChanged = true;
+		}
+		if (cameraInteraction.moveRight) {
+			moveRightCameraPos(0.001+cameraSensibility);
+			moveRightTarget(0.01+cameraSensibility);
+			viewParamsChanged = true;
+		}
+		if (cameraInteraction.rotateRight){
+			rotateTargetRight(degToRad(-5.5*cameraSensibility-0.5));
+			viewParamsChanged = true;
+		}
+		if (cameraInteraction.rotateLeft){
+			rotateTargetRight(degToRad(5.5*cameraSensibility+0.5));
+			viewParamsChanged = true;
+		}
+		if (cameraInteraction.moveUp){
+			moveUpCameraPos(0.001+cameraSensibility);
+			moveUpTarget(0.001+cameraSensibility);
+			viewParamsChanged = true;
+		}
+		if(cameraInteraction.moveDown){
+      if(cameraPosition[1] > 0){
+			  moveUpCameraPos(-0.001-cameraSensibility);
+			  moveUpTarget(-0.001-cameraSensibility);
+			  viewParamsChanged = true;}
+		}
+		if(cameraInteraction.rotateUp){
+			rotateTargetUp(degToRad(5.5*cameraSensibility+0.5));
+			viewParamsChanged = true;
+		}
+		if(cameraInteraction.rotateDown){
+			rotateTargetUp(degToRad(-5.5*cameraSensibility-0.5));
+			viewParamsChanged = true;
+		}	
+    
+		if(modalitaParcheggio){
+      // guida della macchina e aggiorno il target e la posizione camera in base al movimento 
+				if(visual == "primaPer"){ //Visuale prima persona
+					cameraPosition = [px+2.5*Math.sin(degToRad(facing)), 1.5, pz+2.5*Math.cos(degToRad(facing))];		
+					target = [px-3*Math.sin(degToRad(facing)), 1.5, pz-3*Math.cos(degToRad(facing))];
+					realign();
+					viewParamsChanged = true;
+				}else{	//Visuale terza persona
+					cameraPosition = [px+10.5*Math.sin(degToRad(facing)), 4, pz+10.5*Math.cos(degToRad(facing))];
+					target = [px-5*Math.sin(degToRad(facing)), 0, pz-5*Math.cos(degToRad(facing))];
+					realign();
+					viewParamsChanged = true;
+				}
+		}
+}
+
+
+/*=================== DRAWING =================== */
+var render = function(){
+  // ridimensiono la canvas, se serve, per adattarla alla dimensione della finestra browser.
+	webglUtils.resizeCanvasToDisplaySize(canvas);
+	// setto quindi la viewport alla dimensione della canvas e aggiorno l'aspect
+	gl.viewport(0.0, 0.0, canvas.width, canvas.height);
+	newAspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+	
+	if(newAspect != aspect){
+		//set projection matrix
+		projectionMatrix  = m4.perspective(degToRad(fov), newAspect, zmin, zmax);
+		aspect = newAspect;	
+	}
+
+  moveCamera();				  
+	if(viewParamsChanged)
+		viewMatrix = m4.inverse(m4.lookAt(cameraPosition, target, up));
+	
+  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	//gl.enable(gl.CULL_FACE);
+	//gl.depthFunc(gl.LEQUAL);
+  gl.clearColor(0.7, 0.85, 0.95, 1);	//sky color
+	gl.clearDepth(1.0);	//Inizializzo il Depth Buffer
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);//Pulisco sia il color buffer che il depth buffer
+  
+  
+  gl.useProgram(lightTextureProgram);
+
+  gl.uniformMatrix4fv(lightTextureProgramLoc.projectionMatrixLocation, false, projectionMatrix);
+  gl.uniformMatrix4fv(lightTextureProgramLoc.viewMatrixLocation, false, viewMatrix);
+
+  //set light position
+  gl.uniform3fv(lightTextureProgramLoc.lightWorldDirectionLocation, m4.normalize(lightPos));
+
+  // set the camera/view position
+  gl.uniform3fv(lightTextureProgramLoc.viewWorldPositionLocation, cameraPosition);
+
+  gl.uniform3fv(gl.getUniformLocation(lightTextureProgram, "u_ambientLight" ), ambientLight );
+  gl.uniform3fv(gl.getUniformLocation(lightTextureProgram, "u_colorLight" ), colorLight );
+
+  //chiamata alla funzione che disegna le varie mesh
+  if(meshes.length >=1){
+    for(var i=0; i<meshes.length; i++){
+      drawMesh(meshes[i]);
+    }
+  }
+
+  //set up canvas per collisioni in modalità parcheggio
+  if(modalitaParcheggio){
+    ctxCollisionCanvas.clearRect(0, 0, ctxCollisionCanvas.canvas.width, ctxCollisionCanvas.canvas.height);
+    ctxCollisionCanvas.font = '20pt Arial';
+    ctxCollisionCanvas.fillStyle = 'black';
+    ctxCollisionCanvas.textAlign = "left";
+    ctxCollisionCanvas.fillText('NESSUNA COLLISIONE', ctxCollisionCanvas.canvas.width/2, ctxCollisionCanvas.canvas.height/4);
+  }
+  else{
+    ctxCollisionCanvas.clearRect(0, 0, ctxCollisionCanvas.canvas.width, ctxCollisionCanvas.canvas.height);
+  }
+
+}
+  
+
+const FRAMES_PER_SECOND = 30;  // Valid values are 60,30,20,15,10...
+// set the mim time to render the next frame
+const FRAME_MIN_TIME = (1000/60) * (60 / FRAMES_PER_SECOND) - (1000/60) * 0.5;
+var lastFrameTime = 0;  // the last frame time
+var lightRotation = 0;
+function update(time){
+    if(time-lastFrameTime < FRAME_MIN_TIME){ //skip the frame if the call is too early		
+		lightPos = initial_LightPos;
+		lightMmatrix = m4.yRotation(lightRotation*0.002, lightMmatrix);
+		lightPos = m4.transformPoint(lightMmatrix, lightPos);
+		if(lightMoveOpt){
+			lightRotation += 1;
+		}
+		if(modalitaParcheggio)
+			CarreraDoStep();
+	
+    window.requestAnimationFrame(update);
+    return; // return as there is nothing to do
+  }
+    lastFrameTime = time; // remember the time of the rendered frame
+    
+	// render the frame
+  render();
+  window.requestAnimationFrame(update); // get next frame
+}
+
+
+window.onload = function setListener() {
+	touchCanvas1.addEventListener("mousedown", doMouseDown);
+	touchCanvas1.addEventListener("mouseup", doMouseUp);
+	touchCanvas1.addEventListener("mousemove", doMouseMove1);
+	touchCanvas2.addEventListener("mousedown", doMouseDown);
+	touchCanvas2.addEventListener("mouseup", doMouseUp);
+	touchCanvas2.addEventListener("mousemove", doMouseMove2);
+  window.addEventListener("mouseup", doMouseUp);	
+
+	/***** Stessi Listener anche ai relativi eventi touchscreen *****/
+	touchCanvas1.addEventListener("touchstart", doMouseDown, {passive: true}); 	
+	touchCanvas1.addEventListener("touchend", doMouseUp);
+	touchCanvas1.addEventListener("touchmove", doMouseMove1, {passive: true});
+	touchCanvas2.addEventListener("touchstart", doMouseDown, {passive: true}); 	
+	touchCanvas2.addEventListener("touchend", doMouseUp);
+	touchCanvas2.addEventListener("touchmove", doMouseMove2, {passive: true});
+	window.addEventListener("touchend", doMouseUp);
+
+	window.addEventListener('keydown', doKeyDown, true);
+	window.addEventListener('keyup', doKeyUp, true);
+}
+
+
+function isPowerOf2(value) {
+  return (value & (value - 1)) === 0;
+}
+
+function radToDeg(r) {
+  return r * 180 / Math.PI;
+}
+
+function degToRad(d) {
+  return d * Math.PI / 180;
+}
+
+
+init();
+initPrograms();
+initCamera();
+initCarrera();
+update(); // start animation
+window.requestAnimationFrame(update);
+
+</script>
+</html>
