@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <title>HAPPY PARKING</title>
+    <link rel="stylesheet" href="./myStyle.css"> </link>
+</head>
+<body>
+    <header id="page-header">
+        <link rel="stylesheet" href="./myStyle.css"> </link>
+     
+    <div id="buttom-header">
+      <div id="header-text">
+        <h1>HAPPY PARKING</h1>
+        <h2>Progetto di Computer Graphics</h2>
+        <h3>Michelle Zanotti</h3>
+      </div>
+      
+    </div>
+    <div id="documentation">
+        <nav id="navbar">
+          <p id="HTML-icon"><i class="fab fa-html5"></i></p>
+          <header id="nav-header">
+            <h1>CONTENUTI</h1>
+          </header>
+          <p><a class="nav-link" href="#Intro">Introduzione</a></p>
+          <p><a class="nav-link" href="#Mesh">Mesh</a></p>
+          <p><a class="nav-link" href="#Inter">Interazione</a></p>
+          <p><a class="nav-link" href="#Illum">Illuminazione</a></p>
+          <p><a class="nav-link" href="#Part">Particolarità</a></p>
+          <p><a class="nav-link" href="#Mig">Migliorie Future</a></p>
+    
+        </nav>
+        <main id="main-doc">
+            <section class="main-section" id="Intro">
+              <header class="section-title">
+                <h2>INTRODUZIONE</h2>
+              </header>
+              <h3>Descrizione</h3>
+                <p>Happy parking è una Web Application di grafica 3D che prevede la possibilità di parcheggiare la propria automobile in un parcheggio posizionato al di fuori di un centro commerciale.</p>
+              <h3>Avvio dell'applicazione</h3>
+                <p>Per poter utilizzare l’applicazione e garantire il corretto caricamento delle varie risorse esterne è necessario lanciare un Server Web locale. Per fare ciò esistono due alternative:</p>
+                <ul>
+                    <li>Sfruttare Python nel caso in cui sia già installato scrivendo dal shell nella cartella project
+                        <br> <code>python -m http.server 8000</code> 
+                        <br>E nel Browser digitare localhost:8000</li>
+                    <br>
+                    <li>Sfruttare l’estensione Live Server fornita da Visual Studio Code, installarla e cliccare in basso a destra sul tasto ‘Go Live’. </li>
+                </ul>
+              <h3>Struttura della pagina</h3>
+                <p>Dopo aver avviato l’applicazione, ci si troverà davanti ad una pagina con la seguente struttura:</p>
+                	<ul>
+                    <li>mainCanvas: canvas principale posto in background tramite il file CSS al fine di non coprire gli altri elementi presenti. È un oggetto canvas con contesto webGL attraverso il quale è realizzata la grafica 3D dell’applicazione</li>
+                    <br>
+                    <li>instructionCanvas (visibile nella terza immagine): oggetto canvas con contesto 2D utilizzato per mostrare le istruzioni d’utilizzo dell’applicazione. Il testo all’interno di esso apparirà e scomparirà (verrà cancellato) attraverso il click del bottone ‘ISTRUZIONI’ all’interno del pannello UI</li>
+                    <br>
+                    <li>touchCanvas 1 e 2: oggetti canvas con contesto 2D all’interno delle quali viene disegnata l’immagine di due gamepad utilizzabili da dispositivi mobile</li>
+                    <br>
+                    <li>collisionCanvas (visibile nella seconda immagine): oggetto canvas con contesto 2D utilizzata solamente nella ‘modalità parcheggio’ per informare l’utente di un eventuale collisione tra la macchina e un altro oggetto della scena</li>
+                    <br>
+                    <li>pannello UI: elemento div utilizzato come contenitore delle varie funzionalità rese disponibili all’utente</li>
+                  </ul> 
+                 <img src="./data/schermata.png" alt="Image" style=" width:800px; height:400px;"> 
+                 <img src="./data/schermata2.png" alt="Image" style="padding-left:2%; width:800px; height:400px;"> 
+                 <img src="./data/istruzioni.png" alt="Image" style="padding-left:25%; padding-top:1%;width:800px; height:400px;">            
+              <h3>Utilizzo</h3>
+                <p>L’applicazione prevede due modalità, selezionabili tramite il pannello UI:</p>
+                <ul>
+                  <li>Modalità Scena: l’utente può familiarizzare con la scena e visualizzarla da diversi punti di vista tramite il movimento della camera.
+                    <ul>
+                      <li>Spostamento in avanti/indietro/destra e sinistra tramite i tasti awsd o il gamepad in basso a sinistra</li>
+                      <li>Spostamento alto/basso tramite i tasti up/down arrow della tastiera</li>
+                      <li>Ruotare tramite i tasti left/right arrow o il gamepad in basso a destra</li>
+                    </ul>
+                  </li>
+                  <br>
+                  <li>Modalità Parcheggio: l’utente può guidare l’automobile per parcheggiarla nel modo migliore possibile prestando attenzione a non collidere con muri/piano o abbandonare la strada. In caso contrario apparirà un messaggio all’interno della collisionCanvas e l’automobile rimbalzerà all’indietro.
+                    La guida può avvenire tramite l’utilizzo dei tasti awsd o del gamepad in basso a sinistra. 
+                    Sono disponibili due modalità di visuale, prima e terza persona, selezionabili dal pannello di controllo.
+                    Solo in questa modalità sarà possibile modificare l’opacità di alberi, della colonna a sinistra o dell’entrata fino a renderli trasparenti nel caso ostruiscano la visuale durante il parcheggio.
+                  </li>
+                </ul>
+                <p>È inoltre presente la possibilità di attivare/disattivare la rotazione di una luce, resettare la posizione della macchina o la visuale e consultare le istruzioni.</p>
+            </section>
+            <section class="main-section" id="Mesh">
+                <header class="section-title">
+                  <h2>MESH</h2>
+                </header>
+                <h3>Creazione ed Esportazione</h3>
+                <p>Le mesh che compongono la scene dell’applicazione sono state create da me utilizzando Blender.</p>
+                <p>L’automobile e le ruote sono state create con centro nell’origine degli assi e orientate verso la direzione giusta per permettere poi il loro movimento all’interno dell’applicazione. Per le ruote è stata creata un’unica mesh esportata con due rotazioni differenti.
+                  Le altre mesh presenti, invece, sono state create nella posizione più consona prendendo in considerazione la locazione della macchina al fine di non dover effettuare translazioni e rotazioni eccessive all’interno del codice dell’applicazione e alleggerire le operazioni di render.</p>
+                <p>Tutte le mesh vengono esportate in file in formato Wavefront OGJ, rendendone poi facile l’importazione da parte dell’applicazione.
+                  </p>
+                  <img src="./data/macchinaant.png" alt="Image" style="padding-left:14%; width:600px; height:300px;"> 
+                  <img src="./data/macchinapos.png" alt="Image" style="padding-left:1%; width:600px; height:300px;"> 
+                  <img src="./data/ruota.png" alt="Image" style="padding-left:14%; width:600px; height:300px;"> 
+                  <img src="./data/strada.png" alt="Image" style="padding-left:1%; width: 600px; height:300px;"> 
+                   <img src="./data/pianoshop.png" alt="Image" style="padding-left:33%;  padding-top:1%; width:600px; height:300px;"> 
+                <h3>Importazione</h3>
+                <p>Per quanto riguarda l’importazione delle mesh e il loro caricamento:</p>
+                 <p> viene definito un array globale per ogni mesh da importare più un array ‘Meshes’ che conterrà al suo interno tutte le mesh caricate con le corrispettive informazioni.</p>
+                 <P> All’interno del campo ‘sourceMesh’ di ogni array viene inserito il contenuto del file obj di ogni mesh.
+                  Viene chiamata la funzione LoadMesh() passando il contesto gl, l’array di una determinata mesh, il nome che si vuole assegnare e la matrice per identificare la posizione iniziale della mesh.</P>
+                 <p> All’interno della funzione LoadMesh viene chiamata la funzione retrevedataFromSource() necessaria per recuperare i dati della mesh da un file OBJ, nel caso in cui sia presente un file MTL vengono recuperati anche i dati relativi ai materiali e inoltre vengono memorizzati i dati di posizioni, normali e coordinate texture nei corrispettivi buffer object. Dopo aver ottenuto mesh e materiali associati vengono caricate le texture che tali materiali contengono. Tutto quanto viene inserito nell’array Meshes.
+                  </p>
+                <h3>Texture</h3>
+                <p>Le Texture sono state applicate definendo il mapping UV tramite Blender</p>
+                <p> Gli oggetti che presentano una texture sono:
+                  la strada, il parcheggio, il cespuglio e il piano su cui poggia e la colonna dell’edificio.</p>
+                <p>All’interno della funzione LoadMesh, oltre a quanto descritto precedentemente, avviene anche il texture Mapping 2D sfruttando la funzione loadTexture che va ad utilizzare la tecnica del Mip Mapping.
+                  </p>
+            </section>
+            <section class="main-section" id="Inter">
+              <img src="./data/modparcheggio.png" alt="Image" style="padding-left:10%; padding-right:10%;padding-top:5%; width:300px; height:400px; float:right">
+              <img src="./data/modscena.png" alt="Image" style="padding-top:12%; width:300px; height:200px; float:right;"> 
+            
+                <header class="section-title">
+                  <h2>INTERAZIONE</h2>
+                </header>
+                <p>Tutte le interazioni possibili avvengono sfruttando pannello UI oppure tastiera/Touch</p>
+                <h3>Pannello UI</h3>
+                <p>Tramite il pannello di controllo è possibile:</p>
+                    <ul>
+                        <li>Cambio Modalità</li>
+                        <br>
+                        <li>Cambiamento della visuale</li>
+                        <br>
+                        <li>Modifica Opacità</li>
+                        <br>
+                        <li>Attivazione/Disattivazione rotazione luce</li>
+                        <br>
+                        <li>Attivazione/Disattivazione istruzioni</li>
+                        <br>
+                        <li>Reset di posizione/visuale</li>
+                    </ul>
+                   
+                <h3>Tastiera/Touch</h3>
+                <p>Tramite la tasitera/touch è possibile il:</p>
+                    <ul>
+                        <li>Movimento Camera</li>
+                        <p>L’utente può muoversi all’interno della scena liberamente attraverso il movimento della camera.
+                            Le funzioni per il movimento/rotazione della camera sono all’interno del file cameraUtilis.js
+                            Queste funzioni permettono di modificare le variabili globali cameraPosition, target e viewUp, usate poi per definire la matrice vista durante il rendering. Grazie alla variabile booleana viewParamsChanged viene tenuta traccia delle modifiche dei parametri di vista per evitare che la matrice vista venga ricalcolata ogni volta.
+                            Attraverso la funzione realign() vengono ricalcolate le giuste direzioni Xe Ye Ze della camera in seguito a rotazioni in modo da avere traslazioni sempre coerenti con l’orientamento corrente della camera.
+                        </p>
+                        <li>Movimento Automobile</li>
+                        <p>Il movimento dell’automobile è gestito dalle funzioni presenti nel file carMove.js i cui parametri andranno poi a influenzare posizione, orientamento e rotazione dell’automobile e delle ruote ad ogni frame.</p>
+                    </ul>
+                <p>Le interazioni tramite touch dello schermo sono permesse tramite:</p>
+                <ul>
+                    <li>La creazione delle due touchCanvas sfruttando il contesto canvas 2D e la sua funzione drawImage</li>
+
+                    <li> Alle touchCanvas sono stati associati listener sia per eventi da mouse che per eventi touch.</li>
+                </ul>
+                <p>L’applicazione, perciò, può essere vista come fruibile anche da dispositivi privi di tastiera e mouse.</p>
+            </section>
+            <section class="main-section" id="Illum">
+                <header class="section-title">
+                  <h2>ILLUMINAZIONE</h2>
+                </header>
+                <p>Nell’applicazione è prevista una sorgente luminosa la cui rotazione intorno all’asse Y può essere attiva e disattivata.
+                    Viene applicato il modello di illuminazione di Phong, il quale stabilisce che il colore di un fragment dipende da: </p>
+                    <ul>
+                        <li>componente ambiente</li>
+                        <li>componente di riflessione diffusa</li>
+                        <li>componente di riflessione speculare</li>
+                    </ul>
+                <p>Queste dipendono da proprietà della luce e del materiale nonché da alcuni calcoli vettoriali
+                    Le proprietà dipendenti da materiale e luce vengono estratte direttamente dalle informazioni associate ad ogni mesh.
+                    Per quanto riguarda la componente ambiente viene stabilita come variabile globale le componenti luce diffusa e speculare vengono calcolate all’interno del fragment shader.</p>
+            </section>
+            <section class="main-section" id="Part">
+                <header class="section-title">
+                  <h2>PARTICOLARITÀ</h2>
+                </header>
+                <h3>Opacità/Trasparenza</h3>
+                <p>Per poter operare sull’opacità/trasparenza di un oggetto è necessario abilitare il blending e stabilire in che modo andrà a combinare i fragment con il valore dei pixel già presenti nel frame buffer 
+                  <ul>
+                    <li><code>gl.enable(gl.BLEND);</code></li>
+                    <li><code>gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);</code></li>
+                  </ul> 
+                <p>Tramite questa funzionalità è stato possibile modificare la componente di opacità dei materiali di determinati oggetti al fine di poterli rendere trasparenti nel caso in cui rendessero la vista della macchina e del suo movimento difficile.</p>
+                <h3>Collisioni</h3>
+                <p>L’applicazione prevede una gestione delle collisioni, nonostante sia molto rudimentale.</p>
+                <p>Per le mesh della macchina, della strada, dei muretti che circondano il parcheggio e del piano sottostante al centro commerciale all’interno della funzione carDoStep() viene chiamata la funzione boundingBox che calcola</p>
+                  <ul>
+                    <li>coordinate X e Z minori e maggiori tra i vertici della mesh</li>
+                    <li>La larghezza e lunghezza della mesh</li>
+                  </ul> 
+                  
+                <p>Avendo questi dati tramite la funzione checkCollision() si identica la presenza di una collisione oppure l’abbandono della strada e lo si comunica all’utente scrivendo un messaggio all’interno della collisionCanvas.</p>
+                <img src="./data/nocollisione.png" alt="Image" style="padding-left:20%; width:400px; height:200px;"> 
+                <img src="./data/collisione.png" alt="Image" style="padding-left:10%; width:400px; height:200px;">
+            </section>
+            <section class="main-section" id="Mig">
+                <header class="section-title">
+                  <h2>MIGLIORIE FUTURE</h2>
+                </header>
+                <p>Alcune migliorie che si potrebbero implementare all’applicazione sono:</p>
+                <ul>
+                    <li>l'implementazione delle ombre</li><br>
+                    <li>prevedere il messaggio di collisione nel punto d'impatto</li><br>
+                    <li>assegnare un punteggio in base alla qualità del parcheggio</li><br>
+                </ul>
+            
+            </section>
+</body>
+</html>

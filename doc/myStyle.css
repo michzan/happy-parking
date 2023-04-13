@@ -1,0 +1,135 @@
+/*=================================
+VARIABLES
+===================================*/
+:root {
+    --dark-theme: rgb(182, 137, 240);
+    --regular-theme: rgb(100, 55, 158);
+    --text: "Arial";
+  }
+  /*=================================
+  DEFAULTS
+  ===================================*/
+  body {
+    font-family: var(--text);
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  p,
+  li {
+    font-size: 20px;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  h2 {
+    font-size: 30px;
+    color: #460066;
+    font-weight: bold;
+  }
+  h3 {
+    font-size: 25px;
+  }
+
+ 
+  /*==========================================
+  PAGE HEADER
+  ==========================================*/
+  div#top-header {
+    display: flex;
+    justify-content: space-between;
+  }
+   #code {
+    font-size: 30px;
+  }
+  #code {
+    font-weight: bolder;
+  }
+
+  #buttom-header {
+    background-color: var(--dark-theme);
+    color: white;
+    text-align: center;
+    margin: 0;
+    height: 360px;
+  }
+  #header-text h1 {
+    margin: 0;
+    padding-top: 99px;
+    font-size: 40px;
+  }
+
+
+  
+  /* ==================================
+  #documentation
+  =====================================*/
+  
+  #main-doc {
+    overflow: auto;
+    margin: 0 0 0 10px;
+    padding: 5px 10px 5px 25px;
+    scroll-behavior: smooth;
+  }
+  
+  #navbar {
+    float: left;
+    position: sticky;
+    top: 25%;
+    color: white;
+    width: 200px;
+    background-color: rgb(205, 171, 250);
+    text-align: center;
+    padding: 0px;
+    margin: 13px 0 0 5px;
+    border-radius: 5px;
+  }
+  #navbar:hover {
+    box-shadow: 1px -1px 9px 0 var(--regular-theme);
+  }
+
+  a.nav-link::after {
+    background-image: radial-gradient(
+      rgb(163, 121, 219),
+      rgb(182, 137, 240),
+      rgb(71, 15, 117),
+      rgb(166, 119, 226),
+      rgb(71, 15, 117),
+      rgb(182, 137, 240),
+      rgb(137, 94, 194)
+    );
+    content: "";
+    display: block;
+    height: 2px;
+    position: absolute;
+    transition: width 0.3s ease 0s, left 0.3s ease 0s;
+    width: 0;
+  }
+  a.nav-link:hover::after {
+    left: 10%;
+    width: 80%;
+  }
+  #navbar #nav-header h1 {
+    margin-top: 20px;
+    color: #460066;
+  }
+  .nav-link {
+    margin-top: 18px;
+  }
+  
+
+  .code-segment {
+    padding: 10px;
+    background-color: rgba(238, 235, 221, 0.6);
+    font-size: 15px;
+    margin-right: 50px;
+    border-radius: 15px;
+    overflow: auto;
+  }
+  
+
+ 
+  
